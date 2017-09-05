@@ -2,25 +2,20 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, session, redirect, url_for, flash
-from flask_bootstrap import Bootstrap
-from flask_script import Manager
-from flask_moment import Moment
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import Required
+from flask_sqlalchemy import SQLAlchemy
+import os
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'hard to guess string'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
-bootstrap = Bootstrap(app)
-moment = Moment(app)
-manager = Manager(app)
+db = SQLAlchemy(app)
 
-
-class NameForm(FlaskForm):
-    username = StringField('What is your username?', validators=[Required()])
-    password = PasswordField('What is your password?', validators=[Required()])
-    submit = SubmitField('Submit')
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column()
 
 
 @app.errorhandler(404)
@@ -35,18 +30,7 @@ def internal_server_error(e):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    form = NameForm()
-    if form.validate_on_submit():
-        old_username = session.get('username')
-        old_password = session.get('password')
-        if old_username is not None and old_username != form.username.data:
-            flash('Looks like you have change your username!')
-        elif old_password is not None and old_password != form.password.data:
-            flash('Looks like you have change your password!')
-        session['username'] = form.username.data
-        session['password'] = form.password.data
-        return redirect(url_for('index'))
-    return render_template('index.html', form=form, name=session.get('username'), pwd=session.get('password'))
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
